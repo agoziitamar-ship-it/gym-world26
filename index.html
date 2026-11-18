@@ -1,5 +1,164 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>GYM WORLD</title><style>*{box-sizing:border-box}body{margin:0;background:#0d1724;color:#fff;font-family:system-ui}button,input{font:inherit}button{background:#49d69a;border:0;border-radius:12px;padding:12px;font-weight:700;color:#08251c;cursor:pointer}.secondary{background:#35465b;color:white}.screen{height:100dvh;overflow:hidden;position:relative}.hidden{display:none!important}#menu{display:grid;place-items:center;background:radial-gradient(circle,#276659,#0d1724)}.panel{width:min(94vw,420px);padding:22px;background:#17283deF;border:1px solid #466078;border-radius:18px;max-height:92dvh;overflow:auto}.panel h1{text-align:center;color:#65e7b5;letter-spacing:3px}.stack{display:grid;gap:12px}.stack button{width:100%}.muted{color:#b5c3d1;font-size:13px}.field{width:100%;background:#0d1724;color:white;padding:10px;border:1px solid #668097;border-radius:9px}#world{background:linear-gradient(#9cd4e5 0 45%,#6d8b77 45%)}#world.night{background:linear-gradient(#17294d 0 45%,#354e52 45%)}#street{position:absolute;top:61%;height:22%;width:100%;background:#626f77;border-top:6px solid #b7b8ac;border-bottom:6px solid #b7b8ac}#street:after{content:'';position:absolute;top:47%;width:100%;border-top:3px dashed #f4e6a8}.buildings{position:absolute;top:22%;width:100%;display:flex;justify-content:space-around;gap:5px;padding:0 7px}.building{width:19%;height:35vh;background:linear-gradient(90deg,#53738a,#8fb0bf);border:3px solid #344e5e;border-radius:8px 8px 0 0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:13px;cursor:pointer;box-shadow:6px 6px #0003}.building:nth-child(even){background:linear-gradient(90deg,#777f98,#a1a7b9)}.building span{background:#16293edc;border-radius:6px;padding:5px;text-align:center;font-size:clamp(9px,2.1vw,15px);font-weight:800}#avatar{position:absolute;left:49%;top:75%;font-size:54px;transform:translate(-50%,-50%);filter:drop-shadow(0 6px 2px #0006);transition:left .12s,top .12s}#hud{position:absolute;inset:0;pointer-events:none}#clock{position:absolute;right:12px;top:12px;background:#0c1b2bdb;padding:10px;border-radius:10px;font-size:13px}#phone{position:absolute;bottom:18px;right:15px;border-radius:50%;font-size:24px;pointer-events:auto}#move{position:absolute;bottom:20px;left:18px;display:grid;grid-template-columns:repeat(3,40px);gap:3px;pointer-events:auto}#move button{padding:8px;background:#ffffffa8}#toast{position:absolute;top:75px;left:50%;transform:translateX(-50%);background:#14263fe8;border-radius:12px;padding:12px;text-align:center;max-width:85vw;min-width:210px}#modal{position:absolute;inset:0;background:#050b14d9;display:grid;place-items:center;padding:10px;z-index:5}#modal h2{color:#6de6b7;margin-top:0}.row{display:flex;align-items:center;justify-content:space-between;gap:8px}.item{padding:10px 0;border-bottom:1px solid #3e5265}.item button{padding:7px}.pill{background:#283d51;padding:6px 9px;border-radius:10px}#interior{position:absolute;inset:0;background:linear-gradient(140deg,#526a74,#263e4d);display:grid;place-items:center}#interior .room{background:#a5a69b;border:10px solid #526d75;width:85vw;height:65vh;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;padding:12px}#exit{position:absolute;top:15px;left:15px}</style><meta name="theme-color" content="#0d1724"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="GYM WORLD"><meta name="description" content="GYM WORLD mobile game prototype"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" type="image/png" href="./icon-192.png"><link rel="apple-touch-icon" href="./icon-192.png"></head><body><div id="menu" class="screen"><div class="panel"><h1>🏋️ GYM WORLD</h1><p style="text-align:center" class="muted">BUILD YOUR BODY. BUILD YOUR LIFE.</p><div class="stack"><button onclick="newGame()">New World</button><button class="secondary" onclick="continueGame()">Continue World</button><button class="secondary" onclick="openModal('Settings','English is the default language. More settings coming soon.')">Settings</button></div><p class="muted" style="text-align:center">Early playable demo · local save only</p></div></div><div id="world" class="screen hidden"><div id="street"></div><div class="buildings"><div class="building" onclick="enter('Home')"><span>🏠 HOME</span></div><div class="building" onclick="enter('Gym')"><span>🏋️ GYM</span></div><div class="building" onclick="shop('Market')"><span>🛒 MARKET</span></div><div class="building" onclick="shop('Shop')"><span>👕 SHOP</span></div><div class="building" onclick="shop('Furniture')"><span>🛋️ HOME STORE</span></div></div><div id="avatar">🧍</div><div id="interior" class="hidden"><button id="exit" class="secondary" onclick="exitRoom()">← City</button><div class="room" id="room"></div></div><div id="hud"><div id="clock"></div><div id="toast" class="hidden"></div><div id="move"><span></span><button onclick="move(0,-1)">↑</button><span></span><button onclick="move(-1,0)">←</button><button onclick="move(0,1)">↓</button><button onclick="move(1,0)">→</button></div><button id="phone" onclick="phoneUI()">📱</button></div></div><div id="modal" class="hidden"><div class="panel"><div class="row"><h2 id="title"></h2><button class="secondary" onclick="closeModal()">✕</button></div><div id="content"></div></div></div><script>const $=x=>document.getElementById(x),KEY='gym_world_demo_save';let g=null;const dayNames=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];function save(){if(g)localStorage.setItem(KEY,JSON.stringify(g))}function openModal(t,html){$('title').textContent=t;$('content').innerHTML=html;$('modal').classList.remove('hidden')}function closeModal(){$('modal').classList.add('hidden')}function toast(t){$('toast').textContent=t;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),3500)}function newGame(){openModal('Create Character',`<div class="stack"><label>Name<input id="name" class="field" value="Alex" maxlength="18"></label><button onclick="create()">Create World</button></div>`)}function create(){g={name:$('name').value.trim()||'Alex',money:500,day:1,hour:8,steps:0,muscle:0,strength:30,posing:0,food:0,photos:0,x:49,y:75,work:0};save();closeModal();launch();enter('Home');toast('Welcome to GYM WORLD!')}function continueGame(){try{g=JSON.parse(localStorage.getItem(KEY));if(!g)throw 0;launch();enter('Home')}catch(e){openModal('No saved world','Create a new world to start playing.')}}function launch(){$('menu').classList.add('hidden');$('world').classList.remove('hidden');refresh()}function refresh(){$('clock').textContent=`${dayNames[(g.day-1)%7]} · Day ${g.day} · ${String(g.hour).padStart(2,'0')}:00`;$('avatar').style.left=g.x+'%';$('avatar').style.top=g.y+'%';$('world').classList.toggle('night',g.hour<6||g.hour>=19);save()}function advance(hours){let h=g.hour+hours;g.day+=Math.floor(h/24);g.hour=h%24;if(Math.floor(h/24)>0)g.steps=0;refresh()}function move(dx,dy){if(!$('interior').classList.contains('hidden'))return;g.x=Math.max(5,Math.min(95,g.x+dx*3));g.y=Math.max(63,Math.min(92,g.y+dy*3));g.steps+=12;refresh()}function enter(place){$('interior').classList.remove('hidden');$('room').innerHTML=place==='Home'?`<button onclick="sleep()">🛏️ Sleep</button><button onclick="eat()">🧊 Fridge / Eat</button><button onclick="openModal('Wardrobe','👕 GYM WORLD starter outfit equipped.')">👕 Wardrobe</button><button onclick="openModal('Edit Home','Furniture placement is planned for a future version.')">🛋️ Edit Home</button>`:`<button onclick="train()">🏋️ Exercises</button><button onclick="pose()">💪 Posing Room</button><button onclick="trainer()">💼 Trainer Shift</button><button onclick="toast('Jake: Bro, looking strong!')">🤝 Jake</button>`;advance(0)}function exitRoom(){$('interior').classList.add('hidden')}function sleep(){advance(8);let d=(g.day-1)%7;toast(d===6?"It's Saturday! Enjoy your day off! 🌴":[0,2,4,5].includes(d)?'Good morning! Today is Workout Day! 💪':'Good morning! Today is Work Day! 💼')}const exercises=['Bench Press','Lat Pulldown','Squat','Shoulder Press','Preacher Curl','Triceps Pushdown','Dumbbell Curl','Pull-ups'];
-function train(){openModal('GYM — Training',`<p class="muted">Choose an exercise, weight and target reps. Your actual limit is hidden.</p><label>Exercise<select class="field" id="exercise">${exercises.map(e=>`<option>${e}</option>`).join('')}</select></label><label>Weight (kg)<input class="field" id="weight" type="number" min="1" max="250" value="30"></label><label>Target reps<input class="field" id="targetReps" type="number" min="1" max="30" value="10"></label><button style="margin-top:10px" onclick="lift()">Start Set</button>`)}
-function lift(){let w=Number($('weight').value),target=Math.round(Number($('targetReps').value)),ex=$('exercise').value;if(!Number.isFinite(w)||w<=0||!Number.isFinite(target)||target<1||target>30){toast('Choose a valid weight and rep count');return}let difficulty={'Bench Press':1,'Lat Pulldown':.9,'Squat':1.4,'Shoulder Press':.65,'Preacher Curl':.4,'Triceps Pushdown':.5,'Dumbbell Curl':.35,'Pull-ups':.8}[ex]||1;let cap=g.strength*difficulty;let reps=w>cap*1.22?0:Math.max(1,Math.floor(14*(cap*1.18-w)/(cap*.8)));reps=Math.min(target,Math.max(0,reps));let success=reps>0;if(success){g.strength+=Math.min(.6,reps*.055);g.muscle+=Math.min(.65,reps*.06)}advance(1);openModal('🏋️ '+ex,`<h2>${reps}/${target} reps</h2><p>${reps<target?'💥 Muscle failure! Your character struggles on the next rep and the weight is secured safely.':'💪 Set complete!'}</p><p class="muted">${success?'Training progress saved.':'Too heavy — try a lighter weight.'}</p><button onclick="train()">Next Set</button> <button class="secondary" onclick="closeModal();toast('Workout finished! You can take a photo in the posing room. 📸')">Finish Workout</button>`)}
-function pose(){g.posing++;advance(1);openModal('Posing Room',`<p>💪 Front Double Biceps</p><p>Posing practice: ${g.posing}</p><button onclick="photo()">Take Progress Photo</button>`)}function photo(){g.photos++;save();openModal('Progress Photo',`📸 Photo #${g.photos} saved on Day ${g.day}.<p class="muted">Muscle growth: ${g.muscle.toFixed(1)}</p>`)}function trainer(){if(g.muscle<10){toast('Unlock trainer career at Muscular level (10 muscle points).');return}g.money+=180;g.work++;advance(8);toast('Trainer shift complete! +$180')}function eat(){if(g.food<1){openModal('Fridge','Your fridge is empty. Buy food at GYM MARKET.');return}openModal('Fridge',`Food portions: ${g.food}<p><button onclick="g.food--;advance(1);closeModal();toast('Meal eaten! 🍽️')">Eat a meal</button></p>`)}function shop(type){let arr=type==='Market'?[['Chicken & rice meal',15],['Protein yogurt',8],['Banana',3]]:type==='Shop'?[['GYM WORLD Blender',90],['Home Treadmill',450],['Komodo Kings Shirt',35]]:[['Sofa',120],['Trophy Shelf',85],['Plant',15]];openModal(type==='Market'?'GYM MARKET':type==='Shop'?'GYM SHOP':'GYM HOME',`<p class="muted">Balance: $${g.money}</p>${arr.map(([name,price])=>`<div class="item row"><span>${name} — $${price}</span><button onclick="buy('${type}',${price},'${name}')">Buy</button></div>`).join('')}`)}function buy(type,price,name){if(g.money<price){toast('Not enough money');return}g.money-=price;if(type==='Market')g.food++;save();shop(type);toast(name+' purchased!')}function phoneUI(){openModal('📱 GYM PHONE',`<div class="stack"><button onclick="openModal('Wallet','Balance: $'+g.money+'<p>Trainer shifts: '+g.work+'</p>')">💰 Wallet</button><button onclick="openModal('Steps','Today: '+g.steps+' steps<br>Estimated calories: '+Math.round(g.steps*.03)+' kcal')">👟 Steps</button><button onclick="openModal('Progress','Progress photos: '+g.photos+'<br>Muscle growth: '+g.muscle.toFixed(1)+'<br>Posing practice: '+g.posing)">📸 Progress</button><button onclick="openModal('Schedule','Sunday: Workout<br>Monday: Work<br>Tuesday: Workout<br>Wednesday: Work<br>Thursday: Workout<br>Friday: Workout<br>Saturday: Free')">📅 Schedule</button><button onclick="openModal('Messages','Jake: Bro, chest day today? 💪')">💬 Messages</button><button onclick="openModal('Competitions','Online competitions are planned for a later version.')">🏆 Competitions</button></div>`)}let dragStart=null;const movePad=$('move');movePad.addEventListener('pointerdown',e=>{if(e.target.tagName==='BUTTON')return;dragStart={x:e.clientX,y:e.clientY};movePad.setPointerCapture(e.pointerId)});movePad.addEventListener('pointermove',e=>{if(!dragStart||!g)return;let dx=e.clientX-dragStart.x,dy=e.clientY-dragStart.y;if(Math.abs(dx)+Math.abs(dy)>14){move(Math.sign(dx),Math.sign(dy));dragStart={x:e.clientX,y:e.clientY}}});movePad.addEventListener('pointerup',()=>dragStart=null);
-document.addEventListener('keydown',e=>{if(!g)return;let d={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key];if(d)move(...d)});</script><script>if("serviceWorker" in navigator && location.protocol==="https:"){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}</script></body></html>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#101a2b"><link rel="manifest" href="manifest.webmanifest">
+<title>GYM WORLD 26</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101a2b;color:white;font-family:system-ui,Arial;touch-action:none}
+canvas{display:block;width:100vw;height:100dvh;image-rendering:pixelated}
+#hud{position:fixed;inset:0;pointer-events:none}button{pointer-events:auto;cursor:pointer;border:1px solid #ffffff55;background:#152338dd;color:white;border-radius:12px;font-weight:800;font-size:15px;padding:10px 15px}
+#top{position:absolute;top:env(safe-area-inset-top,8px);left:12px;right:12px;display:flex;justify-content:space-between;gap:10px}
+#tip{position:absolute;left:50%;top:17%;transform:translateX(-50%);background:#132638e8;border:1px solid #ffffff44;padding:8px 13px;border-radius:12px;text-align:center;font-size:13px;max-width:85vw}
+#pad{position:absolute;bottom:calc(18px + env(safe-area-inset-bottom));left:18px;display:grid;grid-template-columns:repeat(3,52px);gap:4px}
+#pad button{width:52px;height:52px;padding:0;font-size:24px;background:#253c55d9;touch-action:none}
+#actions{position:absolute;bottom:calc(26px + env(safe-area-inset-bottom));right:18px;display:flex;gap:8px;align-items:end}
+#enter{background:#32c98c;color:#09261b;border:0;min-height:54px}#phone{font-size:25px;min-height:54px}
+#overlay{position:fixed;inset:0;background:#091421e8;display:flex;align-items:center;justify-content:center;padding:16px;z-index:5;overflow:auto;touch-action:pan-y}
+#overlay.hidden{display:none}.panel{width:min(94vw,470px);max-height:90dvh;overflow:auto;background:#1c2d40;border:1px solid #6a8290;border-radius:18px;padding:20px;box-shadow:0 12px 60px #0008}
+.panel h1{color:#57e4ae;letter-spacing:2px;margin:0 0 12px}.panel h2{margin:0 0 12px}.panel p{color:#cbd7e1;line-height:1.45}
+.panel button{width:100%;margin:5px 0;background:#39c58b;color:#09241c;border:0}.panel button.alt{background:#344c65;color:white}
+input,select{background:#102033;color:white;border:1px solid #667e8e;padding:10px;border-radius:8px;width:100%;margin:5px 0 10px}
+.small{font-size:12px;color:#a9bbc8}#orientation{position:absolute;top:64px;right:12px;color:#fff9;font-size:11px}
+</style></head><body>
+<canvas id="game"></canvas>
+<div id="hud"><div id="top"><button id="back">☰ Menu</button><button id="clock">Sunday · Day 1 · 08:00</button></div>
+<div id="tip">Move with arrows or WASD · approach a building</div><div id="pad">
+<span></span><button data-move="up">▲</button><span></span>
+<button data-move="left">◀</button><button data-move="down">▼</button><button data-move="right">▶</button></div>
+<div id="actions"><button id="enter" style="display:none">ENTER</button><button id="phone">📱</button></div><div id="orientation">Landscape recommended ↻</div></div>
+<div id="overlay"><div class="panel" id="panel"></div></div>
+<script>
+(()=>{
+'use strict';
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d'),overlay=document.querySelector('#overlay'),panel=document.querySelector('#panel');
+const W=24,H=24,TW=76,TH=38, SAVE='gymworld26_v2';
+let game=null,keys=new Set(),near=null,last=0;
+const buildings=[
+{x:4,y:4,w:3,h:3,name:'HOME',type:'home',color:'#e4b58d'},
+{x:14,y:4,w:4,h:3,name:'GYM WORLD',type:'gym',color:'#54a9bc'},
+{x:4,y:14,w:4,h:3,name:'GYM MARKET',type:'market',color:'#c9a0c8'},
+{x:14,y:14,w:4,h:3,name:'GYM SHOP',type:'shop',color:'#d6c06b'},
+{x:9,y:2,w:3,h:3,name:'GYM BAR',type:'bar',color:'#d98e82'},
+{x:9,y:19,w:4,h:3,name:'GYM PARK',type:'park',color:'#86c48b'}];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function save(){if(game)localStorage.setItem(SAVE,JSON.stringify(game))}
+function load(){try{const g=JSON.parse(localStorage.getItem(SAVE));if(g&&typeof g.x==='number')return g}catch(e){}return null}
+function fresh(){return {x:10,y:10,scene:'city',day:1,minute:480,cash:500,gender:'male',name:'Player',workouts:0,food:3,steps:0,strength:10,muscle:0,shirt:'#38d59d'}}
+function time(n=0){game.minute+=n;while(game.minute>=1440){game.minute-=1440;game.day++}save()}
+function timeLabel(){const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];return `${days[(game.day-1)%7]} · Day ${game.day} · ${String(Math.floor(game.minute/60)).padStart(2,'0')}:${String(game.minute%60).padStart(2,'0')}`}
+function show(title,body,buttons){overlay.classList.remove('hidden');panel.innerHTML='<h2>'+title+'</h2><p>'+body+'</p>';buttons.forEach(([label,fn,alt])=>{let b=document.createElement('button');b.textContent=label;if(alt)b.className='alt';b.onclick=fn;panel.appendChild(b)})}
+function close(){overlay.classList.add('hidden');updateHUD()}
+function menu(){keys.clear();show('🏋️ GYM WORLD 26','Pixel city prototype · Your world is saved on this device.',[
+['▶ Continue World',()=>{game=load()||fresh();close()}],
+['＋ New World',()=>{if(game&&!confirm('Start a new world? This replaces the local save.'))return;game=fresh();save();close()}],
+['ℹ About',()=>show('About this build','This is the first explorable city prototype. Workouts, interiors, shopping and online play are not complete yet.',[['Back',menu]])]
+])}
+function updateHUD(){if(!game)return;document.querySelector('#clock').textContent=timeLabel();let b=buildings.find(b=>Math.abs(game.x-(b.x+b.w/2))<3&&Math.abs(game.y-(b.y+b.h/2))<3);near=game.scene==='city'?b:null;let e=document.querySelector('#enter');e.style.display=near?'block':'none';e.textContent=near?'ENTER '+near.name:'ENTER';document.querySelector('#tip').textContent=game.scene==='city'?(near?'Tap ENTER to visit '+near.name:'Explore the city · move with arrows / WASD'):'Inside '+game.scene.toUpperCase()+' · use the action button';if(game.scene!=='city'){e.style.display='block';e.textContent='ACTIONS'}}
+function act(){if(!game)return;if(game.scene==='city'&&near){game.scene=near.type;time(5);save();interiorMenu()}else if(game.scene!=='city')interiorMenu()}
+
+function stats(){game.strength??=10;game.muscle??=0;game.workouts??=0}
+const exercises=[
+{name:'Bench Press',muscle:'Chest',base:25},
+{name:'Lat Pulldown',muscle:'Back',base:30},
+{name:'Squat',muscle:'Legs',base:35},
+{name:'Shoulder Press',muscle:'Shoulders',base:15},
+{name:'Preacher Curl',muscle:'Biceps',base:10},
+{name:'Triceps Pushdown',muscle:'Triceps',base:15}
+];
+function gymMenu(){
+stats();
+show('🏋️ GYM WORLD · TRAINING',`Choose your workout style.<br><b>Strength:</b> ${game.strength.toFixed(1)} · <b>Muscle:</b> ${game.muscle.toFixed(1)} · <b>Sessions:</b> ${game.workouts}`,[
+['⚡ Quick Workout',quickMenu],
+['🏋️ Normal Workout',normalMenu],
+['← Return to city',()=>{game.scene='city';save();close()},true]
+])}
+function quickMenu(){
+show('⚡ Quick Workout','Pick a workout. Your character trains automatically and in-game time advances.',[
+['Upper Body · 45 min',()=>quickFinish('Upper Body',45,0.8,0.6)],
+['Lower Body · 45 min',()=>quickFinish('Lower Body',45,0.8,0.6)],
+['Full Body · 60 min',()=>quickFinish('Full Body',60,1,0.8)],
+['← Back',gymMenu,true]
+])}
+function quickFinish(name,minutes,muscle,strength){
+stats();game.workouts++;game.muscle+=muscle;game.strength+=strength;time(minutes);save();
+show('✅ Workout complete!',`${name} finished in ${minutes} minutes.<br>Muscle +${muscle.toFixed(1)} · Strength +${strength.toFixed(1)}<br>Total workouts: ${game.workouts}`,[
+['Another workout',gymMenu],['← Return to city',()=>{game.scene='city';save();close()},true]
+])}
+function normalMenu(){
+stats();
+show('🏋️ Normal Workout','Choose a machine. Set the weight and reps; the character performs the set automatically.',[
+...exercises.map((ex,i)=>[ex.name+' · '+ex.muscle,()=>exerciseMenu(i)]),
+['← Back',gymMenu,true]
+])}
+function exerciseMenu(i){
+const ex=exercises[i];
+overlay.classList.remove('hidden');
+panel.innerHTML=`<h2>🏋️ ${ex.name}</h2><p>Muscle: ${ex.muscle}<br>Strength: ${game.strength.toFixed(1)}<br>Choose your weight and repetitions.</p><label>Weight (kg)<input id="liftWeight" type="number" min="1" max="400" step="2.5" value="${ex.base}"></label><label>Repetitions<input id="liftReps" type="number" min="1" max="30" step="1" value="10"></label>`;
+let b=document.createElement('button');b.textContent='▶ Start set';b.onclick=()=>{
+const weight=Number(document.querySelector('#liftWeight').value),reps=Number(document.querySelector('#liftReps').value);
+if(!Number.isFinite(weight)||weight<1||weight>400||!Number.isInteger(reps)||reps<1||reps>30){alert('Enter a weight from 1–400 kg and 1–30 repetitions.');return}
+performSet(ex,weight,reps)
+};panel.appendChild(b);
+let back=document.createElement('button');back.textContent='← Machines';back.className='alt';back.onclick=normalMenu;panel.appendChild(back);
+}
+function performSet(ex,weight,reps){
+stats();
+const capacity=ex.base+game.strength*1.6;
+const effort=weight/capacity;
+const completed=effort<=0.8?reps:Math.max(0,Math.min(reps,Math.floor(reps*(1.4-effort))));
+const success=completed===reps;
+const gain=completed>0?Math.min(0.35,0.08+completed*0.012):0;
+game.muscle+=gain;game.strength+=completed>0?Math.min(0.2,completed*0.016):0;
+game.workouts++;time(Math.max(5,Math.ceil(completed*0.6)+3));save();
+show(success?'✅ Set completed!':'💥 Failed repetition',`${ex.name}<br>${weight} kg · ${completed}/${reps} reps<br>${success?'All repetitions completed.':'The character could not complete the next rep.'}<br>Muscle +${gain.toFixed(2)} · Strength: ${game.strength.toFixed(2)}`,[
+['Repeat this exercise',()=>exerciseMenu(exercises.indexOf(ex))],
+['Choose another machine',normalMenu],
+['← Return to city',()=>{game.scene='city';save();close()},true]
+])}
+function interiorMenu(){
+const scene=game.scene, back=['← Return to city',()=>{game.scene='city';save();close()},true];
+if(scene==='home')show('🏠 Your Home','A furnished starter home. You can rest and eat here.',[
+['🛏 Sleep 8 hours',()=>{time(480);show('Good morning!','You slept for 8 hours.',[['Continue',()=>{close()}],back])}],
+['🧊 Eat from fridge ('+game.food+' meals)',()=>{if(game.food>0){game.food--;time(20);save();show('Meal finished','You ate at home.',[['Continue',close],back])}else show('Empty fridge','Visit GYM MARKET to buy groceries.',[back])}],
+['👕 Wardrobe',()=>show('Wardrobe','Choose a starter shirt color.',[['Green',()=>{game.shirt='#38d59d';save();close()}],['Blue',()=>{game.shirt='#48aaff';save();close()}],['Red',()=>{game.shirt='#ee6d70';save();close()}],back])],back]);
+else if(scene==='gym')gymMenu();
+else if(scene==='market')show('🛒 GYM MARKET','Groceries go directly to your home fridge.',[['Buy 3 meals · $30',()=>{if(game.cash<30)return show('Not enough cash','You need $30.',[back]);game.cash-=30;game.food+=3;time(10);save();close()}],back]);
+else if(scene==='shop')show('👕 GYM SHOP','Clothing collections are coming in a later update.',[back]);
+else if(scene==='bar')show('🍹 GYM BAR','NPC conversations and relationships are coming later.',[back]);
+else show('🌳 GYM PARK','A green corner of the city.',[back]);
+}
+function phone(){if(!game)return;show('📱 GYM PHONE',`Name: ${game.name}<br>Wallet: $${game.cash}<br>Steps: ${game.steps}<br>Workouts: ${game.workouts}<br>Strength: ${(game.strength??10).toFixed(1)}<br>Muscle: ${(game.muscle??0).toFixed(1)}<br>Food at home: ${game.food}<br>Time: ${timeLabel()}`,[['Close',close]])}
+function resize(){const d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*d);canvas.height=Math.round(innerHeight*d);ctx.setTransform(d,0,0,d,0,0);ctx.imageSmoothingEnabled=false}
+addEventListener('resize',resize);resize();
+function poly(pts,color,stroke){ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=color;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke()}}
+function iso(x,y){return [(x-y)*TW/2,(x+y)*TH/2]}
+function tile(x,y,c){const [sx,sy]=iso(x,y);poly([[sx,sy],[sx+TW/2,sy+TH/2],[sx,sy+TH],[sx-TW/2,sy+TH/2]],c,'#00000012')}
+function box3(x,y,w,h,z,c){let a=iso(x,y),b=iso(x+w,y),d=iso(x,y+h),e=iso(x+w,y+h),top=[a,b,e,d].map(p=>[p[0],p[1]-z]);poly([d,e,[e[0],e[1]-z],[d[0],d[1]-z]],'#647d83');poly([b,e,[e[0],e[1]-z],[b[0],b[1]-z]],'#52656b');poly(top,c,'#ffffff50')}
+function label(s,x,y){ctx.font='bold 12px monospace';ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#0a1d28';ctx.strokeText(s,x,y);ctx.fillStyle='#fff';ctx.fillText(s,x,y)}
+function avatar(x,y){ctx.fillStyle='#1d2937';ctx.fillRect(x-8,y-5,7,13);ctx.fillRect(x+2,y-5,7,13);ctx.fillStyle=game.shirt;ctx.fillRect(x-11,y-26,22,23);ctx.fillStyle='#d9a47e';ctx.fillRect(x-7,y-39,14,13);ctx.fillStyle='#28201c';ctx.fillRect(x-7,y-40,14,5);ctx.fillStyle='#fff';ctx.fillRect(x+3,y-33,3,2)}
+function render(){
+const w=innerWidth,h=innerHeight;ctx.clearRect(0,0,w,h);ctx.fillStyle='#8cc8d5';ctx.fillRect(0,0,w,h);
+if(!game)return;
+const scale=clamp(Math.min(w/760,h/490)*0.95,0.53,1.4);
+ctx.save();ctx.translate(w/2,h*0.54);ctx.scale(scale,scale);
+if(game.scene==='city'){
+let focus=iso(game.x,game.y);ctx.translate(-focus[0],-focus[1]);
+for(let s=0;s<W+H;s++)for(let x=0;x<W;x++){let y=s-x;if(y<0||y>=H)continue;const road=(x===8||x===9||x===12||x===13||y===8||y===9||y===12||y===13);tile(x,y,road?'#5d6c76':(x+y)%2?'#75b67d':'#7dbc83');if(road&&(x+y)%4===0){let p=iso(x+.5,y+.5);ctx.fillStyle='#cdd4b5';ctx.fillRect(p[0]-2,p[1]+7,4,3)}}
+const objects=[...buildings.map(b=>({sort:b.x+b.y+b.w+b.h,building:b})),{sort:game.x+game.y+0.4,player:true}].sort((a,b)=>a.sort-b.sort);
+for(const o of objects){if(o.player){let p=iso(game.x+.5,game.y+.5);avatar(p[0],p[1]-5)}else{let b=o.building,z=b.type==='park'?12:78;box3(b.x,b.y,b.w,b.h,z,b.color);let p=iso(b.x+b.w/2,b.y+b.h/2);label(b.name,p[0],p[1]-z-12);}}
+}else{
+for(let y=0;y<10;y++)for(let x=0;x<12;x++)tile(x,y,(x+y)%2?'#c7bda4':'#b4ab96');
+const stuff=game.scene==='home'?[[2,2,3,2,28,'#658db5'],[7,2,2,3,44,'#d6b89c'],[4,6,3,2,22,'#a58a74']]:game.scene==='gym'?[[2,2,2,2,38,'#626b7a'],[7,2,2,2,40,'#626b7a'],[4,6,4,1,18,'#535b68']]:[[3,3,2,2,35,'#8e9c9d'],[7,5,2,2,35,'#8e9c9d']];
+stuff.forEach(a=>box3(...a));let p=iso(6,5);avatar(p[0],p[1]-10);
+}
+ctx.restore();
+requestAnimationFrame(render)}
+function move(dx,dy){if(!game||!overlay.classList.contains('hidden'))return;if(game.scene!=='city')return;const nx=clamp(game.x+dx,0.5,W-1.5),ny=clamp(game.y+dy,0.5,H-1.5);let blocked=buildings.some(b=>nx>b.x-.1&&nx<b.x+b.w+.1&&ny>b.y-.1&&ny<b.y+b.h+.1);if(!blocked){game.x=nx;game.y=ny;game.steps++;if(game.steps%8===0)time(1);save();updateHUD()}}
+let hold=null;document.querySelectorAll('[data-move]').forEach(b=>{let dir=b.dataset.move,vec={up:[0,-.32],down:[0,.32],left:[-.32,0],right:[.32,0]}[dir];const stop=()=>{if(hold){clearInterval(hold);hold=null}};b.addEventListener('pointerdown',e=>{e.preventDefault();stop();move(...vec);hold=setInterval(()=>move(...vec),75)});['pointerup','pointercancel','pointerleave'].forEach(k=>b.addEventListener(k,stop))});
+addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key)){e.preventDefault();keys.add(e.key.toLowerCase())}});
+addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
+setInterval(()=>{if(keys.has('arrowup')||keys.has('w'))move(0,-.28);if(keys.has('arrowdown')||keys.has('s'))move(0,.28);if(keys.has('arrowleft')||keys.has('a'))move(-.28,0);if(keys.has('arrowright')||keys.has('d'))move(.28,0)},75);
+document.querySelector('#enter').onclick=act;document.querySelector('#phone').onclick=phone;document.querySelector('#back').onclick=menu;document.querySelector('#clock').onclick=phone;
+game=load();menu();render();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+})();
+</script></body></html>
